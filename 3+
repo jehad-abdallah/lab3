@@ -1,0 +1,33 @@
+SELECT *
+FROM `customer`
+ORDER BY name ASC;
+
+SELECT *
+FROM `customer`
+ORDER BY name DESC;
+
+SELECT *
+FROM `customer`
+ORDER BY name, id_customer;
+
+SELECT *
+FROM `customer`
+ORDER BY id_customer;
+
+
+SELECT MIN(cost)
+FROM tourist_route
+WHERE cost <2;
+
+
+SELECT MAX(cost)
+FROM tourist_route
+WHERE cost > 2;
+
+SELECT AVG(cost)
+FROM tourist_route
+WHERE cost > 2;
+
+SELECT SUM(cost)
+FROM tourist_route;
+
