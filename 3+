@@ -34,5 +34,6 @@ FROM tourist_route;
 
 SELECT COST, count(*)
 FROM VOUCHER
+WHERE COST > 200
 GROUP BY COST;
 
