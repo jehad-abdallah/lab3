@@ -31,3 +31,8 @@ WHERE cost > 2;
 SELECT SUM(cost)
 FROM tourist_route;
 
+
+SELECT COST, count(*)
+FROM VOUCHER
+GROUP BY COST;
+
