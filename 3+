@@ -37,3 +37,15 @@ FROM VOUCHER
 WHERE COST > 200
 GROUP BY COST;
 
+
+SELECT date_of_birth, count(*)
+FROM customer
+WHERE date_of_birth > 30-01-1994
+GROUP BY date_of_birth;
+
+
+SELECT date_of_birth, count(*)
+FROM customer
+WHERE date_of_birth > 30-01-1994
+GROUP BY date_of_birth
+HAVING COUNT(*) > 10;
