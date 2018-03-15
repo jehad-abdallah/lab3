@@ -8,6 +8,12 @@ from voucher
 right join customer on voucher.id_voucher = customer.id_customer
 where 'id_voucher'  = 10;
 
+select *
+from voucher
+left join customer on voucher.id_voucher = customer.id_customer
+where id_voucher  = voucher.id_customer;
+
+
 select customer.Name, voucher.id_voucher
 from customer
 left join voucher on customer.id_customer = voucher.id_voucher
