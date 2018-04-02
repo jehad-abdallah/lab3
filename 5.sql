@@ -131,6 +131,7 @@ PRIMARY KEY (`id_dealer`)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
+
 select * from dealer;
 insert into dealer(id_dealer, id_company, surname, telephone)
 values
@@ -246,6 +247,7 @@ PRIMARY KEY (`id_medication`)
 )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
+
 
 select * from medication;
 insert into medication(id_medication, name_of_medication, term)
@@ -706,4 +708,33 @@ values
 (758, 648, 218, 538, '330 Sutton Rd, Huntsville AL 35763', 8),
 (759, 649, 219, 539, '6140A Univ Drive, Huntsville AL 35806', 3),
 (760, 650, 220, 540, '4206 N College Ave, Jackson AL 36545', 3);
+
+
+ALTER TABLE dealer
+ADD FOREIGN KEY (id_company) REFERENCES pharmacy(id_company);
+
+ALTER TABLE `order`
+ADD CONSTRAINT `order.ib1` FOREIGN KEY (id_manufacture_of_medicine) REFERENCES manufacture_of_medicine(id_manufacture_of_medicine),
+ADD CONSTRAINT `order.ib2` FOREIGN KEY (id_dealer) REFERENCES dealer(id_dealer),
+ADD CONSTRAINT `order.ib3` FOREIGN KEY (id_pharmacy) REFERENCES pharmacy(id_pharmacy);
+
+
+ALTER TABLE manufacture_of_medicine
+ADD CONSTRAINT manufacture_of_medicine.ib1 FOREIGN KEY (id_medication) REFERENCES medication(id_medication),
+ADD CONSTRAINT manufacture_of_medicine.ib2 FOREIGN KEY (id_company) REFERENCES company(id_company);
+
+create index part_of_id11 on company(id_company);
+create index part_of_id12 on dealer(id_dealer);
+create index part_of_id13 on medication(id_medication);
+create index part_of_id14 on pharmacy(id_pharmacy);
+create index part_of_id15 on manufacture_of_medicine(id_manufacture_of_medicine);
+create index part_of_id16 on `order`(id_order);
+
+
+select medication.name_of_medication , company.name ,  pharmacy.name_of_pharmacy , `order`.address
+from medication, company, pharmacy, `order`
+where medication.name_of_medication = 'Кордерон' and company.name = 'Аргус';
+
+
+
 
