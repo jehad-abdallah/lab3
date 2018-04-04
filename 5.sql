@@ -730,11 +730,40 @@ create index part_of_id14 on pharmacy(id_pharmacy);
 create index part_of_id15 on manufacture_of_medicine(id_manufacture_of_medicine);
 create index part_of_id16 on `order`(id_order);
 
-
+#2
 select medication.name_of_medication , company.name ,  pharmacy.name_of_pharmacy , `order`.address
 from medication, company, pharmacy, `order`
 where medication.name_of_medication = 'Кордерон' and company.name = 'Аргус';
 
 
+#3
+select medication.name_of_medication, company.name, `order`.quantity
+from medication, company, `order`
+where company.name = 'Фарма' and `order`.quantity = 0 and medication.term > '1.05.12';
+#another option
+select medication.name_of_medication, company.name, `order`.quantity
+from medication, company, `order`
+WHERE company.name = 'Фарма'
+GROUP BY name_of_medication
+HAVING medication.duration > '7';
+
+#4
+SELECT company.name, MIN(manufacture_of_medicine.ball),  MAX(manufacture_of_medicine.ball), 
+SUM(`order`.quantity)
+FROM company, manufacture_of_medicine, `order`
+group by company.name
+having SUM(`order`.quantity) > 100;
+
+#5
+select pharmacy.name_of_pharmacy
+from `order`
+left join pharmacy on `order`.id_pharmacy = pharmacy.id_pharmacy
+where company.name = 'Гедеон Рихтер';
+
+#6
+SET SQL_SAFE_UPDATES = 0;
+UPDATE manufacture_of_medicine, medication
+set manufacture_of_medicine.cost = manufacture_of_medicine.cost * 0.8
+where manufacture_of_medicine.cost > 3000 and medication.term > '1.03.2015'
 
 
