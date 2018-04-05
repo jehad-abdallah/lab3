@@ -3,6 +3,7 @@ show databases;
 use medicine;
 show tables;
 describe company;
+describe medication;
 DROP TABLE IF exists company;
 CREATE TABLE IF NOT EXISTS company(
 `id_company` INT(11) NOT NULL AUTO_INCREMENT,
@@ -243,11 +244,11 @@ CREATE TABLE IF NOT EXISTS medication(
 id_medication INT(11) NOT NULL AUTO_INCREMENT,
 name_of_medication VARCHAR(255) NOT NULL,
 term DATE NULL NOT NULL,
+duration tinyint(2) not null,
 PRIMARY KEY (`id_medication`)
 )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
-
 
 select * from medication;
 insert into medication(id_medication, name_of_medication, term)
@@ -600,10 +601,13 @@ id_dealer INT(11) NOT NULL,
 id_pharmacy INT(11) NOT NULL,
 address text(1000) NOT NULL,
 quantity VARCHAR(255) NOT NULL,
+id_medication int(11) not null,
+id_company int(11) not null,
 PRIMARY KEY (`id_order`)
 )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
+
 
 select * from `order`;
 insert into `order`(id_order, id_manufacture_of_medicine, id_dealer, id_pharmacy, address, quantity)
@@ -729,40 +733,50 @@ create index part_of_id13 on medication(id_medication);
 create index part_of_id14 on pharmacy(id_pharmacy);
 create index part_of_id15 on manufacture_of_medicine(id_manufacture_of_medicine);
 create index part_of_id16 on `order`(id_order);
-
-#2
-select medication.name_of_medication , company.name ,  pharmacy.name_of_pharmacy , `order`.address
-from medication, company, pharmacy, `order`
-where medication.name_of_medication = 'Кордерон' and company.name = 'Аргус';
-
-
-#3
-select medication.name_of_medication, company.name, `order`.quantity
-from medication, company, `order`
-where company.name = 'Фарма' and `order`.quantity = 0 and medication.term > '1.05.12';
-#another option
-select medication.name_of_medication, company.name, `order`.quantity
-from medication, company, `order`
-WHERE company.name = 'Фарма'
-GROUP BY name_of_medication
-HAVING medication.duration > '7';
-
-#4
-SELECT company.name, MIN(manufacture_of_medicine.ball),  MAX(manufacture_of_medicine.ball), 
-SUM(`order`.quantity)
-FROM company, manufacture_of_medicine, `order`
-group by company.name
-having SUM(`order`.quantity) > 100;
-
-#5
-select pharmacy.name_of_pharmacy
+create index IN_company_name on company(name);
+#2Выдать информацию по всем заказам лекарства “Кордерон” компании “Аргус” с указанием названий аптек, дат, объема заказов. 
+explain 
+select manufacture_of_medicine.cost, pharmacy.name_of_pharmacy , `order`.address
 from `order`
 left join pharmacy on `order`.id_pharmacy = pharmacy.id_pharmacy
-where company.name = 'Гедеон Рихтер';
+left join manufacture_of_medicine on `order`.id_manufacture_of_medicine = manufacture_of_medicine.id_manufacture_of_medicine
+left join medication on `order`.id_medication = medication.id_medication
+where medication.name_of_medication = 'Кордерон' and pharmacy.name_of_pharmacy = 'Аргус';
 
-#6
+
+#3Дать список лекарств компании “Фарма”, на которые не были сделаны заказы до 1.05.12.
+explain
+select medication.name_of_medication, company.name, `order`.quantity, medication.term
+from `order`
+left join medication on  `order`.id_medication = medication.id_medication
+left join company on `order`.id_company = company.id_company
+where company.name = 'Фарма' 
+group by medication.name_of_medication 
+having min(medication.term) > '1.05.12';
+
+#4Дать минимальный и максимальный баллы лекарств каждой фирмы, которая производит не менее 100 видов препаратов, с указанием названий фирмы и лекарства.
+explain
+SELECT company.name, MIN(manufacture_of_medicine.ball),  MAX(manufacture_of_medicine.ball)
+FROM `order`
+left join company on `order`.id_company = company.id_company
+left join manufacture_of_medicine on `order`.id_manufacture_of_medicine =  manufacture_of_medicine.id_manufacture_of_medicine
+group by company.name
+having count(`order`.quantity) > 10;
+
+#5Дать списки сделавших заказы аптек по всем дилерам компании “Гедеон Рихтер”. Если у дилера нет заказов, в названии аптеки проставить NULL.
+explain
+select  company.name, dealer.surname
+from `order`
+right join company on `order`.id_company = company.id_company
+left join dealer on `order`.id_dealer = dealer.id_dealer
+where company.name = 'AbbVie';
+
+#6Уменьшить на 20% стоимость всех лекарств, если она превышает 3000, а длительность лечения не более 7 дней.
+
 SET SQL_SAFE_UPDATES = 0;
-UPDATE manufacture_of_medicine, medication
+
+UPDATE manufacture_of_medicine
+left join medication on manufacture_of_medicine.id_medication = medication.id_medication
 set manufacture_of_medicine.cost = manufacture_of_medicine.cost * 0.8
 where manufacture_of_medicine.cost > 3000 and medication.term > '1.03.2015'
 
