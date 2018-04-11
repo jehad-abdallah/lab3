@@ -61,6 +61,7 @@ PRIMARY KEY (`id_client`)
 )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
+insert into `client` values(5, 'mohamed', '12312488');
 
 drop table if exists booking;
 create table if not exists booking(
@@ -79,6 +80,7 @@ id_booking int(11) not null,
 id_room_category int(11) not null,
 check_in_date date not null,
 check_out_date date not null,
+id_hotel int(11) not null,
 primary key (id_room_number)
 )
 engine = InnoDB
@@ -136,11 +138,31 @@ having room_number.check_in_date <= '1.05.12' and room_number.check_out_date >= 
 #select `client`.name_client, hotel.name, room.room_number, room_number.check_out_date as date_of_departure
 #from `client`, hotel, room, room_number
 #where hotel.name = 'Космос' and (room_number.check_in_date >= '01.04.2012' and room_number.check_out_date <= '30.04.2012')
- 
-
+select  `client`.name_client, hotel.name, room.room_number, room_number.check_out_date as date_of_departure
+from room_kind 
+right join hotel on room_kind.id_hotel = hotel.id_hotel
+left join  `client` on room_kind.id_client = `client`.id_client
+left join room on room_kind.id_room =  room.id_room
+left join room_number on room_kind.id_room_category = room_kind.id_room_category
+where hotel.name = 'Космос' and room_number.check_in_date >= '01.04.12' 
+and room_number.check_out_date <= '01.04.12'
+group by room.room_number;
 #6Продлить до 30.05.12 дату проживания в гостинице “Сокол” всем клиентам комнат категории “люкс”, которые заселились 15.05.12, а выезжают 28.05.12
+SET SQL_SAFE_UPDATES = 0;
 
+update room_number 
+left join room_kind on room_number.id_room_category = room_kind.id_room_category
+left join hotel on room_number.id_hotel = hotel.id_hotel
+set room_number.check_out_date = '30.05.12'
+where hotel.name = 'Сокол' and room_kind.category_room = 'люкс' 
+and room_number.check_in_date = '15.05.12' and room_number.check_out_date = '28.05.12';
 
 #7Привести пример транзакции при создании брони.
-
-
+#this is just example not more 
+START TRANSACTION;
+insert into hotel values(11, 'hello', 7,'karla marksa 121'); 
+update `client` set name_client = 'ahmed' where id_client = 5;
+select @Sum_cost := SUM(cost) from room where cost > 200;
+update hotel set summary = @Sum_cost where hotel.name = 'Pyramids';
+rollback;
+commit;
