@@ -310,7 +310,8 @@ where `group`.name_of_specialty = 'ВМ';
 #6)Всем студентам специальности ИВТ, получившим оценки меньшие 5 по предмету БД до 12.05, повысить эти оценки на 1 балл.
 SET SQL_SAFE_UPDATES = 0;
 update grade 
-left join student_grade on grade.id_lesson = student_grade.id_lesson
+left join lesson on grade.id_lesson = lesson.id_lesson
+left join `subject` on lesson.id_subject = `subject`.id_subject
 set grade.grade = grade.grade + 1
-where student_grade.name_of_subject = 'database' 
-and grade.grade < 5 and student_grade.data < '12.05.2018';
+where `subject`.name_of_subject = 'database' 
+and grade.grade < 5 and lesson.data < '12.05.2018';
