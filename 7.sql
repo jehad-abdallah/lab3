@@ -167,12 +167,12 @@ id_lesson int(11) not null auto_increment,
 id_teacher int(11) not null,
 id_subject int(11) not null,
 id_group int(11) not null,
-id_grade int(11) not null,
+`data` date default null,
 PRIMARY KEY (id_lesson)
 )
 engine = InnoDB
 default CHARACTER SET = utf8;
-
+ 
 insert into lesson
 values
 (200, 160, 150, 1),
@@ -223,16 +223,16 @@ values
 drop table if exists grade;
 create table if not exists grade(
 id_grade int(11) not null auto_increment,
-student_number int(11) not null,
-lesson_number int(11) not null,
+id_student int(11) not null,
+id_lesson int(11) not null,
 grade float not null,
-primary key(id_grade)
+primary key(id_grade),
+key(id_lesson),
+key(id_student)
 )
 engine = InnoDB
 default CHARACTER SET = utf8;
-insert into grade
-values
-(250,
+
 
 #1)Перенести описание БД в СУБД с проставлением индексов и внешних ключей.
 
@@ -258,28 +258,59 @@ create index IN_grade_id on grade(id_grade);
 #2)Выдать оценки студентов по математике если они обучаются/обучались данному предмету. Оформить выдачу данных с использованием view.
 drop view grade_in_math;
 create view grade_in_math as
-	select grade.grade ,`subject`.name_of_subject, student.last_name
-	from lesson
-    left join `group` on lesson.id_group = `group`.id_group
-	left join student on `group`.id_group = student.id_group
-    left join grade on lesson.id_grade = grade.id_grade
-    left join `subject` on lesson.id_subject = `subject`.id_subject
-	where `subject`.name_of_subject = 'math';
-select * from grade_in_math;
+	select `subject`.name_of_subject, lesson.id_lesson, lesson.`data`
+    from lesson
+    left join `subject` on lesson.id_subject = subject.id_subject
+    where `subject`.name_of_subject = 'math';
+select student.last_name, grade.grade 
+from grade_in_math
+left join grade on grade_in_math.id_lesson = grade.id_lesson
+left join student on grade.id_student = student.id_student
+where now() > grade_in_math.data;
 
-#3)Дать информацию о должниках с указанием фамилии студента и названия предмета. 
-   #Должниками считаются студенты, не имеющие оценки по предмету, который ведется в группе. Оформить в виде процедуры, на вход название группы.
-select student.last_name, `subject`.name_of_subject
+-- 3)Дать информацию о должниках с указанием фамилии студента и названия предмета. 
+-- Должниками считаются студенты, не имеющие оценки по предмету, который ведется в группе. Оформить в виде процедуры, на вход название группы.
+drop procedure if exists debtor;
+DELIMITER //
+
+-- count grade
+
+create procedure debtor (in group_name varchar(255))
+begin
+		create temporary table group_debtor(
+        select student.id_student, student.last_name, `subject`.name_of_subject, lesson.id_lesson, count(grade.grade)
+        from lesson
+        left join `subject` on lesson.id_subject = `subject`.id_subject
+        left join `group` on lesson.id_group = `group`.id_group
+        left join student on `group`.id_group = student.id_group
+        where `group`.group_name = group_name
+        );
+END //
+
+DELIMITER ;
+
+CALL debtor("ПС_22");
 
 
 #4)Дать среднюю оценку студентов по каждому предмету для тех предметов, по которым занимается не менее 10 студентов.
-
+#select srudent.last_name, `subject`.name_of_subject, avg(grade.grade);
 
 
 #5)Дать оценки студентов специальности ВМ по всем проводимым предметам с указанием группы, фамилии, предмета, даты. При отсутствии оценки заполнить значениями NULL поля оценки и даты.
+select student.id_student, student.last_name, `group`.group_name,`group`.name_of_specialty,`subject`.name_of_subject, lesson.id_lesson, lesson.data
+from lesson
+left join `subject` on lesson.id_subject = `subject`.id_subject
+left join `group` on lesson.id_group = `group`.id_group
+left join student on `group`.id_group = student.id_group
+right join grade on student.id_student = grade.id_student
+where `group`.name_of_specialty = 'ВМ';
 
 
 
 #6)Всем студентам специальности ИВТ, получившим оценки меньшие 5 по предмету БД до 12.05, повысить эти оценки на 1 балл.
-
-
+SET SQL_SAFE_UPDATES = 0;
+update grade 
+left join student_grade on grade.id_lesson = student_grade.id_lesson
+set grade.grade = grade.grade + 1
+where student_grade.name_of_subject = 'database' 
+and grade.grade < 5 and student_grade.data < '12.05.2018';
