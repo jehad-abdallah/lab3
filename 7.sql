@@ -272,20 +272,24 @@ where now() > grade_in_math.data;
 -- Должниками считаются студенты, не имеющие оценки по предмету, который ведется в группе. Оформить в виде процедуры, на вход название группы.
 drop procedure if exists debtor;
 DELIMITER //
-
 -- count grade
-
 create procedure debtor (in group_name varchar(255))
 begin
-	select student.id_student, student.last_name, `subject`.name_of_subject,
-	SUM(grade.grade) AS gradesum
-	from lesson
-	left join `subject` on lesson.id_subject = `subject`.id_subject
-	left join `group` on lesson.id_group = `group`.id_group
-	left join student on `group`.id_group = student.id_group
-	left join grade on student.id_student = grade.id_student
-	where grade.grade IS NULL AND  `group`.group_name = group_name
-	group by student.id_student, `subject`.name_of_subject;
+	create temporary table st_group as(
+		select student.id_student, student.last_name, `subject`.name_of_subject,
+		lesson.id_lesson
+		from lesson
+		left join `subject` on lesson.id_subject = `subject`.id_subject
+		left join `group` on lesson.id_group = `group`.id_group
+		left join student on `group`.id_group = student.id_group
+		left join grade on student.id_student = grade.id_student
+		where `group`.group_name = group_name
+		);
+        select distinct st_group.last_name,  st_group.name_of_subject
+        from st_group 
+        left join grade on grade.id_student = st_group.id_student 
+        group by st_group.last_name and st_group.name_of_subject
+        having count(grade.grade) = 0;
         
 END //
 
