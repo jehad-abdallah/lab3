@@ -277,24 +277,39 @@ DELIMITER //
 
 create procedure debtor (in group_name varchar(255))
 begin
-		create temporary table group_debtor(
-        select student.id_student, student.last_name, `subject`.name_of_subject, lesson.id_lesson, count(grade.grade)
-        from lesson
-        left join `subject` on lesson.id_subject = `subject`.id_subject
-        left join `group` on lesson.id_group = `group`.id_group
-        left join student on `group`.id_group = student.id_group
-        where `group`.group_name = group_name
-        );
+	select student.id_student, student.last_name, `subject`.name_of_subject,
+	SUM(grade.grade) AS gradesum
+	from lesson
+	left join `subject` on lesson.id_subject = `subject`.id_subject
+	left join `group` on lesson.id_group = `group`.id_group
+	left join student on `group`.id_group = student.id_group
+	left join grade on student.id_student = grade.id_student
+	where grade.grade IS NULL AND  `group`.group_name = group_name
+	group by student.id_student, `subject`.name_of_subject;
+        
 END //
 
 DELIMITER ;
-
 CALL debtor("ПС_22");
 
 
-#4)Дать среднюю оценку студентов по каждому предмету для тех предметов, по которым занимается не менее 10 студентов.
-#select srudent.last_name, `subject`.name_of_subject, avg(grade.grade);
-
+#4)Дать среднюю оценку студентов по каждому предмету для тех предметов,
+# по которым занимается не менее 10 студентов.
+drop temporary table subjects;
+create temporary table subjects (
+	select `subject`.id_subject, `subject`.name_of_subject, count(student.id_student) as sc
+    from lesson
+	left join `subject` on lesson.id_subject = `subject`.id_subject	
+	left join `group` on lesson.id_group = `group`.id_group
+	left join student on `group`.id_group = student.id_group
+	left join grade on student.id_student = grade.id_student
+    group by `subject`.id_subject
+);
+select subjects.name_of_subject, avg(grade.grade)
+from subjects
+left join lesson on lesson.id_subject = subjects.id_subject
+left join grade on lesson.id_lesson = grade.id_lesson
+where subjects.sc > 10;
 
 #5)Дать оценки студентов специальности ВМ по всем проводимым предметам с указанием группы, фамилии, предмета, даты. При отсутствии оценки заполнить значениями NULL поля оценки и даты.
 select student.id_student, student.last_name, `group`.group_name,`group`.name_of_specialty,`subject`.name_of_subject, lesson.id_lesson, lesson.data
@@ -304,7 +319,6 @@ left join `group` on lesson.id_group = `group`.id_group
 left join student on `group`.id_group = student.id_group
 right join grade on student.id_student = grade.id_student
 where `group`.name_of_specialty = 'ВМ';
-
 
 
 #6)Всем студентам специальности ИВТ, получившим оценки меньшие 5 по предмету БД до 12.05, повысить эти оценки на 1 балл.
